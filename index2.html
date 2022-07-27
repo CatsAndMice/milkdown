@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@6.1.0/tinymce.min.js"></script>
+    <style>
+        figure.image {
+            display: inline-block;
+            border: 1px solid gray;
+            margin: 0 2px 0 1px;
+            background: #f5f2f0;
+        }
+
+        figure.align-left {
+            float: left;
+        }
+
+        figure.align-right {
+            float: right;
+        }
+
+        figure.image img {
+            margin: 8px 8px 0 8px;
+        }
+
+        figure.image figcaption {
+            margin: 6px 8px 6px 8px;
+            text-align: center;
+        }
+
+        /*
+ Alignment using classes rather than inline styles
+ check out the "formats" option
+*/
+
+        img.align-left {
+            float: left;
+        }
+
+        img.align-right {
+            float: right;
+        }
+
+        /* Basic styles for Table of Contents plugin (tableofcontents) */
+        .mce-toc {
+            border: 1px solid gray;
+        }
+
+        .mce-toc h2 {
+            margin: 4px;
+        }
+
+        .mce-toc li {
+            list-style-type: none;
+        }
+    </style>
+</head>
+
+<body>
+    <textarea id="input">
+    <h1>表格</h1>
+    <del>删除</del> 
+    <p><strong><del>删除</del></strong></p>
+    </textarea>
+    <script src="https://unpkg.com/turndown/dist/turndown.js"></script>
+    <script src="https://unpkg.com/turndown-plugin-gfm/dist/turndown-plugin-gfm.js"></script>
+    <script>
+        var gfm = turndownPluginGfm.gfm
+        var turndownService = new TurndownService({ headingStyle: 'atx' })
+        turndownService.use(gfm)
+        turndownService.addRule('strikethrough', {
+            filter: ['del', 's', 'strike'],
+            replacement: function (content) {
+                return '*' + content + '*'
+            }
+        })
+        const useDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isSmallScreen = window.matchMedia('(max-width: 1023.5px)').matches;
+        const t = tinymce.init({
+            selector: 'textarea#input',
+            language: 'zh-Hans',
+            language_url: './zh-Hans.js',
+            plugins: 'preview importcss searchreplace autolink autosave  save directionality code visualblocks visualchars fullscreen image link media template codesample  charmap pagebreak nonbreaking anchor insertdatetime advlist lists wordcount help charmap  emoticons',
+            editimage_cors_hosts: ['picsum.photos'],
+            menubar: 'file edit view insert format tools  help',
+            toolbar: 'undo redo | bold italic underline strikethrough | fontfamily fontsize blocks | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | pagebreak | charmap emoticons | fullscreen  preview save print | insertfile image media template link anchor codesample | ltr rtl',
+            toolbar_sticky: false,
+            toolbar_sticky_offset: isSmallScreen ? 102 : 108,
+            autosave_ask_before_unload: true,
+            autosave_interval: '30s',
+            autosave_prefix: '{path}{query}-{id}-',
+            autosave_restore_when_empty: false,
+            autosave_retention: '2m',
+            image_advtab: true,
+            link_list: [
+                { title: 'My page 1', value: 'https://www.tiny.cloud' },
+                { title: 'My page 2', value: 'http://www.moxiecode.com' }
+            ],
+            image_list: [
+                { title: 'My page 1', value: 'https://www.tiny.cloud' },
+                { title: 'My page 2', value: 'http://www.moxiecode.com' }
+            ],
+            image_class_list: [
+                { title: 'None', value: '' },
+                { title: 'Some class', value: 'class-name' }
+            ],
+            importcss_append: true,
+            file_picker_callback: (callback, value, meta) => {
+                console.log(value, meta);
+                if (meta.filetype === 'file') {
+                    callback('https://www.google.com/logos/google.jpg', { text: 'My text' });
+                }
+
+                if (meta.filetype === 'image') {
+                    const input = document.createElement('input');
+                    input.setAttribute('type', 'file');
+                    input.setAttribute('accept', 'image/*');
+
+                    input.addEventListener('change', (e) => {
+                        const file = e.target.files[0];
+                        const reader = new FileReader();
+                        reader.addEventListener('load', () => {
+                            const id = 'blobid' + (new Date()).getTime();
+                            const blobCache = tinymce.activeEditor.editorUpload.blobCache;
+                            const base64 = reader.result.split(',')[1];
+                            const blobInfo = blobCache.create(id, file, base64);
+                            blobCache.add(blobInfo);
+
+                            /* call the callback and populate the Title field with the file name */
+                            callback(blobInfo.blobUri(), { title: file.name });
+                        });
+                        reader.readAsDataURL(file);
+                    });
+                    input.click();
+                }
+
+                /* Provide alternative source and posted for the media dialog */
+                if (meta.filetype === 'media') {
+                    callback('movie.mp4', { source2: 'alt.ogg', poster: 'https://www.google.com/logos/google.jpg' });
+                }
+            },
+            images_upload_handler: (blobInfo, success, failure) => {
+                console.log(blobInfo);
+                // Promise.resolve().then(() => {
+                //     success('https://img1.baidu.com/it/u=3217543765,3223180824&fm=253&app=120&size=w931&n=0&f=JPEG&fmt=auto?sec=1659027600&t=13cc943e0606fbc8a711ce7cde806662')
+                // })
+            },
+            template_cdate_format: '[Date Created (CDATE): %m/%d/%Y : %H:%M:%S]',
+            template_mdate_format: '[Date Modified (MDATE): %m/%d/%Y : %H:%M:%S]',
+            height: 600,
+            image_caption: true,
+            quickbars_selection_toolbar: 'bold italic | quicklink h2 h3 blockquote quickimage',
+            noneditable_class: 'mceNonEditable',
+            toolbar_mode: 'sliding ',
+            contextmenu: 'link image ',
+            skin: useDarkMode ? 'oxide-dark' : 'oxide',
+            content_css: useDarkMode ? 'dark' : 'default',
+            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:16px }',
+            init_instance_callback: (editor) => {
+                editor.on('change', (e) => {
+                    var content = tinyMCE.activeEditor.getContent();
+                    var markdown = turndownService.turndown(content)
+                    console.log(content, markdown);
+                });
+            }
+        });
+
+        t.then(result => {
+
+
+        })
+    </script>
+</body>
+
+</html>
