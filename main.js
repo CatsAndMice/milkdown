@@ -18,12 +18,11 @@ import {
 } from '@milkdown/plugin-slash';
 import { getIcon } from "./icon"
 
-
 let output = ''
 Editor.make()
   .config((ctx) => {
     ctx.set(rootCtx, document.querySelector('#app'));
-    ctx.set(defaultValueCtx, "# Milkdown :heartpulse: Vanilla");
+    ctx.set(defaultValueCtx, "## 点赞+评论+关注=学会");
     ctx.get(listenerCtx).markdownUpdated((ctx, markdown, prevMarkdown) => {
       output = markdown;
       console.log(output);
@@ -85,7 +84,6 @@ Editor.make()
     config: (ctx) => {
       return ({ content, isTopLevel }) => {
         if (!isTopLevel) return null;
-
         if (!content) {
           return { placeholder: "键入文字或'/'选择" };
         }
